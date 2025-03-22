@@ -1,86 +1,49 @@
 <!DOCTYPE html>
-<html lang="en"> 
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Your Name - UI/UX Designer 2025</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap">
+  <title>Persistent List</title>
 </head>
 <body>
-  <header>
-    <nav>
-      <div class="logo">Your Name</div>
-      <ul class="nav-links">
-        <li><a href="#about">About</a></li>
-        <li><a href="#portfolio">Portfolio</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#contact">Contact</a></li>
-      </ul>
-    </nav>
-    <div class="hero">
-      <h1>Welcome to My Creative World</h1>
-      <p>I craft immersive digital experiences that inspire and engage.</p>
-      <a href="#portfolio" class="cta-button">View My Work</a>
-    </div>
-  </header>
+  <input type="text" id="inputBox" placeholder="Enter something">
+  <ul id="itemList"></ul>
 
-  <section id="about">
-    <h2>About Me</h2>
-    <p>Hi, I'm Your Name, a passionate UI/UX designer with a focus on creating user-centered designs that solve real-world problems. With a blend of creativity and technical expertise, I bring ideas to life.</p>
-  </section>
+  <script>
+    // Load saved items from localStorage when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedItems = JSON.parse(localStorage.getItem('items')) || [];
+      const itemList = document.getElementById('itemList');
 
-  <section id="portfolio">
-    <h2>Portfolio</h2>
-    <div class="portfolio-grid">
-      <div class="portfolio-item">
-        <img src="project1.jpg" alt="Project 1">
-        <h3>Project 1</h3>
-      </div>
-      <div class="portfolio-item">
-        <img src="project2.jpg" alt="Project 2">
-        <h3>Project 2</h3>
-      </div>
-      <div class="portfolio-item">
-        <img src="project3.jpg" alt="Project 3">
-        <h3>Project 3</h3>
-      </div>
-    </div>
-  </section>
+      // Populate the list with saved items
+      savedItems.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        itemList.appendChild(li);
+      });
+    });
 
-  <section id="services">
-    <h2>Services</h2>
-    <div class="services-grid">
-      <div class="service-item">
-        <h3>UI Design</h3>
-        <p>Creating visually stunning and intuitive user interfaces.</p>
-      </div>
-      <div class="service-item">
-        <h3>UX Research</h3>
-        <p>Understanding user needs to design seamless experiences.</p>
-      </div>
-      <div class="service-item">
-        <h3>Prototyping</h3>
-        <p>Building interactive prototypes to test and refine ideas.</p>
-      </div>
-    </div>
-  </section>
+    // Add new item to the list and save to localStorage
+    const inputBox = document.getElementById('inputBox');
+    inputBox.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && inputBox.value.trim() !== '') {
+        const itemText = inputBox.value.trim();
+        const itemList = document.getElementById('itemList');
 
-  <section id="contact">
-    <h2>Contact Me</h2>
-    <form action="#" method="post">
-      <input type="text" name="name" placeholder="Your Name" required>
-      <input type="email" name="email" placeholder="Your Email" required>
-      <textarea name="message" placeholder="Your Message" required></textarea>
-      <button type="submit">Send Message</button>
-    </form>
-  </section>
+        // Add to the list
+        const li = document.createElement('li');
+        li.textContent = itemText;
+        itemList.appendChild(li);
 
-  <footer>
-    <p>&copy; 2025 Your Name. All rights reserved.</p>
-  </footer>
+        // Save to localStorage
+        const savedItems = JSON.parse(localStorage.getItem('items')) || [];
+        savedItems.push(itemText);
+        localStorage.setItem('items', JSON.stringify(savedItems));
 
-  <script src="script.js"></script>
+        // Clear the input box
+        inputBox.value = '';
+      }
+    });
+  </script>
 </body>
 </html>
