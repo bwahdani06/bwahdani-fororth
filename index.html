@@ -6,78 +6,85 @@
     <title>Interactive Item Table</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         /* Custom CSS for enhanced table styling */
         table {
             border-collapse: collapse;
             width: 100%;
             margin-top: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-            border-radius: 0.5rem; /* Rounded corners for the table */
-            overflow: hidden;  /* to apply border-radius to thead and tbody */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            overflow: hidden;
         }
 
         th, td {
             padding: 12px 16px;
             text-align: left;
-            border-bottom: 1px solid #e5e7eb; /* Tailwind's border-gray-200 */
+            border-bottom: 1px solid #e5e7eb;
         }
 
         th {
-            background-color: #f9fafb; /* Tailwind's bg-gray-50 */
-            font-weight: 600; /* Tailwind's font-semibold */
-            color: #6b7280; /* Tailwind's text-gray-500 */
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s ease;
         }
 
         tbody tr:hover {
-            background-color: #f0f0f0; /* Slight background change on hover for interactivity */
+            background-color: #f0f0f0;
         }
 
         .remove-btn {
             cursor: pointer;
-            color: #dc2626; /* Tailwind's text-red-500 */
-            transition: color 0.2s ease; /* Smooth transition */
+            color: #dc2626;
+            transition: color 0.2s ease, transform 0.2s ease;
         }
 
         .remove-btn:hover {
-            color: #b91c1c; /* Tailwind's text-red-700 */
+            color: #b91c1c;
+            transform: scale(1.1);
         }
 
-        #clearAllBtn {
+        #clearAllBtn, #downloadExcelBtn {
             margin-top: 20px;
             padding: 10px 20px;
-            background-color: #ef4444; /* Tailwind's bg-red-500 */
+            background-color: #ef4444;
             color: white;
-            border-radius: 0.375rem; /* Tailwind's rounded-md */
+            border-radius: 0.375rem;
             cursor: pointer;
-            transition: background-color 0.3s ease; /* Smooth transition */
+            transition: background-color 0.3s ease;
             border: none;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add shadow */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-right: 10px;
         }
 
-        #clearAllBtn:hover {
-            background-color: #c81e1e; /* Tailwind's bg-red-700 */
+        #clearAllBtn:hover, #downloadExcelBtn:hover {
+            background-color: #c81e1e;
         }
 
         #inputBox {
             padding: 10px;
-            border: 1px solid #e5e7eb; /* Tailwind's border-gray-200 */
-            border-radius: 0.375rem; /* Tailwind's rounded-md */
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
             width: 100%;
             margin-bottom: 1rem;
-            font-size: 1rem; /* Tailwind's text-base */
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); /* Inner shadow */
+            font-size: 1rem;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         #inputBox:focus {
             outline: none;
-            border-color: #3b82f6; /* Tailwind's border-blue-500 */
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); /* Ring shadow, using rgba */
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
 
         .empty-message {
             text-align: center;
-            color: #9ca3af; /* Tailwind's text-gray-400 */
+            color: #9ca3af;
             padding: 1rem;
         }
     </style>
@@ -96,49 +103,28 @@
             </thead>
             <tbody id="itemList">
                 <tr>
-                    <td colspan="3" class="px-4 py-2 text-center text-gray-400">No items added yet.</td>
+                    <td colspan="3" class="px-4 py-2 text-center text-gray-400">No items added yet. Start by typing above!</td>
                 </tr>
             </tbody>
         </table>
-        <button id="clearAllBtn" class="mt-4">Clear All</button>
+        <div class="flex">
+            <button id="clearAllBtn" class="mt-4" aria-label="Clear all items">Clear All</button>
+            <button id="downloadExcelBtn" class="mt-4" aria-label="Download as Excel">Download as Excel</button>
+        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const savedItems = JSON.parse(localStorage.getItem('items')) || [];
             const itemList = document.getElementById('itemList');
-            const itemTable = document.getElementById('itemTable');
+            const inputBox = document.getElementById('inputBox');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const downloadExcelBtn = document.getElementById('downloadExcelBtn');
 
-            function populateTable(items) {
-                itemList.innerHTML = ''; // Clear the table body
-                if (items.length === 0) {
-                    itemList.innerHTML = '<tr><td colspan="3" class="px-4 py-2 text-center text-gray-400">No items added yet.</td></tr>';
-                    return;
-                }
-                items.forEach((item, index) => {
-                    const row = document.createElement('tr');
-                    const numberCell = document.createElement('td');
-                    numberCell.textContent = index + 1;
-                    const itemCell = document.createElement('td');
-                    itemCell.textContent = item;
-                    const removeCell = document.createElement('td');
-                    const removeBtn = document.createElement('span');
-                    removeBtn.textContent = '❌';
-                    removeBtn.className = 'remove-btn';
-                    removeBtn.addEventListener('click', () => {
-                        removeItemFromList(index);
-                    });
-                    removeCell.appendChild(removeBtn);
-                    row.appendChild(numberCell);
-                    row.appendChild(itemCell);
-                    row.appendChild(removeCell);
-                    itemList.appendChild(row);
-                });
-            }
-
+            // Load saved items on page load
             populateTable(savedItems);
 
-            const inputBox = document.getElementById('inputBox');
+            // Add item on Enter key press
             inputBox.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && inputBox.value.trim() !== '') {
                     const itemText = inputBox.value.trim();
@@ -149,16 +135,62 @@
                 }
             });
 
+            // Clear all items with confirmation
+            clearAllBtn.addEventListener('click', () => {
+                if (savedItems.length === 0) {
+                    alert("No items to clear!");
+                    return;
+                }
+                if (confirm("Are you sure you want to clear all items?")) {
+                    localStorage.removeItem('items');
+                    savedItems.length = 0; // Clear the array
+                    populateTable(savedItems);
+                }
+            });
+
+            // Download as Excel
+            downloadExcelBtn.addEventListener('click', () => {
+                if (savedItems.length === 0) {
+                    alert("No items to export!");
+                    return;
+                }
+                const data = savedItems.map((item, index) => ({
+                    '#': index + 1,
+                    'Item': item
+                }));
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Items');
+                XLSX.writeFile(workbook, 'items.xlsx');
+            });
+
+            // Populate the table with items
+            function populateTable(items) {
+                itemList.innerHTML = ''; // Clear the table body
+                if (items.length === 0) {
+                    itemList.innerHTML = '<tr><td colspan="3" class="px-4 py-2 text-center text-gray-400">No items added yet. Start by typing above!</td></tr>';
+                    return;
+                }
+                items.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-2">${index + 1}</td>
+                        <td class="px-4 py-2">${item}</td>
+                        <td class="px-4 py-2"><span class="remove-btn" aria-label="Remove item">❌</span></td>
+                    `;
+                    row.querySelector('.remove-btn').addEventListener('click', () => {
+                        removeItemFromList(index);
+                    });
+                    itemList.appendChild(row);
+                });
+            }
+
+            // Remove an item from the list
             function removeItemFromList(index) {
                 savedItems.splice(index, 1);
                 localStorage.setItem('items', JSON.stringify(savedItems));
                 populateTable(savedItems);
             }
-
-            document.getElementById('clearAllBtn').addEventListener('click', () => {
-                localStorage.removeItem('items');
-                populateTable([]);
-            });
         });
     </script>
 </body>
