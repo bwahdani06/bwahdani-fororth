@@ -1,118 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Persistent List with Remove Buttons</title>
-  <style>
-    li {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .remove-btn {
-      margin-left: 10px;
-      cursor: pointer;
-      color: red;
-    }
-    #clearAllBtn {
-      margin-top: 20px;
-      padding: 8px 16px;
-      background-color: #ff4444;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    #clearAllBtn:hover {
-      background-color: #cc0000;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Item Table</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+        /* Custom CSS for enhanced table styling */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+            border-radius: 0.5rem; /* Rounded corners for the table */
+            overflow: hidden;  /* to apply border-radius to thead and tbody */
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* Tailwind's border-gray-200 */
+        }
+
+        th {
+            background-color: #f9fafb; /* Tailwind's bg-gray-50 */
+            font-weight: 600; /* Tailwind's font-semibold */
+            color: #6b7280; /* Tailwind's text-gray-500 */
+        }
+
+        tbody tr:hover {
+            background-color: #f0f0f0; /* Slight background change on hover for interactivity */
+        }
+
+        .remove-btn {
+            cursor: pointer;
+            color: #dc2626; /* Tailwind's text-red-500 */
+            transition: color 0.2s ease; /* Smooth transition */
+        }
+
+        .remove-btn:hover {
+            color: #b91c1c; /* Tailwind's text-red-700 */
+        }
+
+        #clearAllBtn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ef4444; /* Tailwind's bg-red-500 */
+            color: white;
+            border-radius: 0.375rem; /* Tailwind's rounded-md */
+            cursor: pointer;
+            transition: background-color 0.3s ease; /* Smooth transition */
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add shadow */
+        }
+
+        #clearAllBtn:hover {
+            background-color: #c81e1e; /* Tailwind's bg-red-700 */
+        }
+
+        #inputBox {
+            padding: 10px;
+            border: 1px solid #e5e7eb; /* Tailwind's border-gray-200 */
+            border-radius: 0.375rem; /* Tailwind's rounded-md */
+            width: 100%;
+            margin-bottom: 1rem;
+            font-size: 1rem; /* Tailwind's text-base */
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); /* Inner shadow */
+        }
+
+        #inputBox:focus {
+            outline: none;
+            border-color: #3b82f6; /* Tailwind's border-blue-500 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); /* Ring shadow, using rgba */
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #9ca3af; /* Tailwind's text-gray-400 */
+            padding: 1rem;
+        }
+    </style>
 </head>
-<body>
-  <input type="text" id="inputBox" placeholder="Enter something">
-  <ul id="itemList"></ul>
-  <button id="clearAllBtn">Clear All</button>
+<body class="bg-gray-100 font-sans antialiased">
+    <div class="container mx-auto p-6">
+        <h1 class="text-2xl font-semibold text-gray-800 mb-4">Interactive Item Table</h1>
+        <input type="text" id="inputBox" placeholder="Enter something" class="mb-4">
+        <table id="itemTable" class="w-full">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2 text-left">#</th>
+                    <th class="px-4 py-2 text-left">Item</th>
+                    <th class="px-4 py-2 text-left">Remove</th>
+                </tr>
+            </thead>
+            <tbody id="itemList">
+                <tr>
+                    <td colspan="3" class="px-4 py-2 text-center text-gray-400">No items added yet.</td>
+                </tr>
+            </tbody>
+        </table>
+        <button id="clearAllBtn" class="mt-4">Clear All</button>
+    </div>
 
-  <script>
-    // Load saved items from localStorage when the page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      const savedItems = JSON.parse(localStorage.getItem('items')) || [];
-      const itemList = document.getElementById('itemList');
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedItems = JSON.parse(localStorage.getItem('items')) || [];
+            const itemList = document.getElementById('itemList');
+            const itemTable = document.getElementById('itemTable');
 
-      // Populate the list with saved items
-      savedItems.forEach((item, index) => {
-        addItemToList(item, index);
-      });
-    });
+            function populateTable(items) {
+                itemList.innerHTML = ''; // Clear the table body
+                if (items.length === 0) {
+                    itemList.innerHTML = '<tr><td colspan="3" class="px-4 py-2 text-center text-gray-400">No items added yet.</td></tr>';
+                    return;
+                }
+                items.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    const numberCell = document.createElement('td');
+                    numberCell.textContent = index + 1;
+                    const itemCell = document.createElement('td');
+                    itemCell.textContent = item;
+                    const removeCell = document.createElement('td');
+                    const removeBtn = document.createElement('span');
+                    removeBtn.textContent = '❌';
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.addEventListener('click', () => {
+                        removeItemFromList(index);
+                    });
+                    removeCell.appendChild(removeBtn);
+                    row.appendChild(numberCell);
+                    row.appendChild(itemCell);
+                    row.appendChild(removeCell);
+                    itemList.appendChild(row);
+                });
+            }
 
-    // Add new item to the list and save to localStorage
-    const inputBox = document.getElementById('inputBox');
-    inputBox.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && inputBox.value.trim() !== '') {
-        const itemText = inputBox.value.trim();
-        addItemToList(itemText);
-        saveToLocalStorage(itemText);
+            populateTable(savedItems);
 
-        // Clear the input box
-        inputBox.value = '';
-      }
-    });
+            const inputBox = document.getElementById('inputBox');
+            inputBox.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && inputBox.value.trim() !== '') {
+                    const itemText = inputBox.value.trim();
+                    savedItems.push(itemText);
+                    localStorage.setItem('items', JSON.stringify(savedItems));
+                    populateTable(savedItems);
+                    inputBox.value = '';
+                }
+            });
 
-    // Function to add an item to the list
-    function addItemToList(itemText, index) {
-      const itemList = document.getElementById('itemList');
+            function removeItemFromList(index) {
+                savedItems.splice(index, 1);
+                localStorage.setItem('items', JSON.stringify(savedItems));
+                populateTable(savedItems);
+            }
 
-      // Create list item
-      const li = document.createElement('li');
-      li.textContent = itemText;
-
-      // Create remove button for the item
-      const removeBtn = document.createElement('span');
-      removeBtn.textContent = '❌';
-      removeBtn.className = 'remove-btn';
-      removeBtn.addEventListener('click', () => {
-        removeItemFromList(index);
-      });
-
-      // Append remove button to the list item
-      li.appendChild(removeBtn);
-      itemList.appendChild(li);
-    }
-
-    // Function to remove an item from the list
-    function removeItemFromList(index) {
-      const savedItems = JSON.parse(localStorage.getItem('items')) || [];
-      savedItems.splice(index, 1); // Remove the item at the specified index
-      localStorage.setItem('items', JSON.stringify(savedItems));
-
-      // Refresh the list
-      refreshList();
-    }
-
-    // Function to clear all items
-    document.getElementById('clearAllBtn').addEventListener('click', () => {
-      localStorage.removeItem('items'); // Clear all items from localStorage
-      refreshList(); // Refresh the list
-    });
-
-    // Function to refresh the list
-    function refreshList() {
-      const itemList = document.getElementById('itemList');
-      itemList.innerHTML = ''; // Clear the list
-
-      // Repopulate the list from localStorage
-      const savedItems = JSON.parse(localStorage.getItem('items')) || [];
-      savedItems.forEach((item, index) => {
-        addItemToList(item, index);
-      });
-    }
-
-    // Function to save an item to localStorage
-    function saveToLocalStorage(itemText) {
-      const savedItems = JSON.parse(localStorage.getItem('items')) || [];
-      savedItems.push(itemText);
-      localStorage.setItem('items', JSON.stringify(savedItems));
-    }
-  </script>
+            document.getElementById('clearAllBtn').addEventListener('click', () => {
+                localStorage.removeItem('items');
+                populateTable([]);
+            });
+        });
+    </script>
 </body>
 </html>
